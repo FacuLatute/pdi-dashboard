@@ -1,0 +1,189 @@
+{
+  "proyecto": {
+    "nombre": "AgroEnergía SRL",
+    "materia": "PDI 1",
+    "cierre": "31/07/2026",
+    "ultima_actualizacion": "2026-03-26"
+  },
+  "premisas": [
+    {
+      "id": 1,
+      "titulo": "Condición general del negocio",
+      "estado": "en_progreso",
+      "pagina": 1,
+      "notas": "",
+      "archivos_vinculados": [
+        1
+      ]
+    },
+    {
+      "id": 2,
+      "titulo": "Aspectos legales — SRL",
+      "estado": "en_progreso",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    },
+    {
+      "id": 3,
+      "titulo": "Aspectos contables y administrativos",
+      "estado": "pendiente",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    },
+    {
+      "id": 4,
+      "titulo": "Recursos humanos — CCT 130/75",
+      "estado": "pendiente",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    },
+    {
+      "id": 5,
+      "titulo": "Compras y proveedores",
+      "estado": "pendiente",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    },
+    {
+      "id": 6,
+      "titulo": "Ventas y política de precios",
+      "estado": "en_progreso",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    },
+    {
+      "id": 7,
+      "titulo": "Estudio de mercado",
+      "estado": "en_progreso",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    },
+    {
+      "id": 8,
+      "titulo": "Estrategia comercial — 4P",
+      "estado": "en_progreso",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    },
+    {
+      "id": 9,
+      "titulo": "Presupuesto integral 12 meses",
+      "estado": "pendiente",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    },
+    {
+      "id": 10,
+      "titulo": "Estados contables proyectados",
+      "estado": "pendiente",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    },
+    {
+      "id": 11,
+      "titulo": "Análisis financiero (VAN, TIR, etc.)",
+      "estado": "pendiente",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    },
+    {
+      "id": 12,
+      "titulo": "Manual de empresa",
+      "estado": "en_progreso",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    },
+    {
+      "id": 13,
+      "titulo": "Habilitaciones e inscripciones",
+      "estado": "pendiente",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    },
+    {
+      "id": 14,
+      "titulo": "Plan de cuentas — Regisoft",
+      "estado": "pendiente",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    },
+    {
+      "id": 15,
+      "titulo": "Otros / adicionales",
+      "estado": "pendiente",
+      "pagina": null,
+      "notas": "",
+      "archivos_vinculados": []
+    }
+  ],
+  "archivos": [
+    {
+      "id": 1,
+      "nombre": "Panel de productos",
+      "tipo": "html",
+      "version": "v1",
+      "estado": "en_progreso",
+      "seccion": "Estudio de mercado",
+      "notas": "",
+      "ruta": "",
+      "historial": []
+    },
+    {
+      "id": 2,
+      "nombre": "Organigrama",
+      "tipo": "docx",
+      "version": "v2",
+      "estado": "en_progreso",
+      "seccion": "Manual de empresa",
+      "notas": "",
+      "ruta": "Premisas PDI 1 2da entrega 2025 V3.xlsx",
+      "historial": []
+    },
+    {
+      "id": 3,
+      "nombre": "Estudio de mercado integrado",
+      "tipo": "docx",
+      "version": "v3",
+      "estado": "en_progreso",
+      "seccion": "Estudio de mercado",
+      "notas": "",
+      "ruta": "",
+      "historial": []
+    },
+    {
+      "id": 4,
+      "nombre": "Plan de equipamiento",
+      "tipo": "xlsx",
+      "version": "v1",
+      "estado": "en_progreso",
+      "seccion": "Presupuesto",
+      "notas": "",
+      "ruta": "",
+      "historial": []
+    },
+    {
+      "id": 5,
+      "nombre": "Contrato social SRL",
+      "tipo": "docx",
+      "version": "v1",
+      "estado": "en_progreso",
+      "seccion": "Aspectos legales",
+      "notas": "",
+      "ruta": "",
+      "historial": []
+    }
+  ]
+}
