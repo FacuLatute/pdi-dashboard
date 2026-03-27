@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 const navItems = [
   { href: '/premisas', label: 'Premisas' },
@@ -9,8 +10,24 @@ const navItems = [
   { href: '/configuracion', label: 'Configuración' },
 ]
 
+const IconLogout = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+)
+
 export default function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   return (
     <aside className="fixed top-0 left-0 h-full w-64 bg-white border-r border-zinc-200 flex flex-col">
@@ -36,6 +53,15 @@ export default function Sidebar() {
           )
         })}
       </nav>
+      <div className="px-3 pb-4 border-t border-zinc-100 pt-3">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+        >
+          <IconLogout />
+          Cerrar sesión
+        </button>
+      </div>
     </aside>
   )
 }

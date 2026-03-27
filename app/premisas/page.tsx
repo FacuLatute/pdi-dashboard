@@ -6,16 +6,16 @@ type Estado = 'completa' | 'en_progreso' | 'pendiente'
 type Filter = 'all' | Estado
 
 interface Premisa {
-  id: number
+  id: string
   titulo: string
   estado: Estado
   pagina: number | null
   notas: string
-  archivos_vinculados: number[]
+  archivos_vinculados: string[]
 }
 
 interface Archivo {
-  id: number
+  id: string
   nombre: string
   tipo: string
   version: string
@@ -96,31 +96,41 @@ export default function PremisasPage() {
   const [loading, setLoading] = useState(true)
 
   // pagina / notas inline editing
-  const [editing, setEditing] = useState<{ id: number; field: 'pagina' | 'notas' } | null>(null)
+  const [editing, setEditing] = useState<{ id: string; field: 'pagina' | 'notas' } | null>(null)
   const [editValue, setEditValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   // titulo inline editing
-  const [editingTitulo, setEditingTitulo] = useState<number | null>(null)
+  const [editingTitulo, setEditingTitulo] = useState<string | null>(null)
   const [tituloValue, setTituloValue] = useState('')
   const tituloRef = useRef<HTMLInputElement>(null)
 
   // delete confirmation
-  const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   // expand/collapse
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
   // archivo link select per premisa
-  const [linkSelect, setLinkSelect] = useState<Record<number, string>>({})
+  const [linkSelect, setLinkSelect] = useState<Record<string, string>>({})
 
   useEffect(() => {
     Promise.all([
       fetch('/api/premisas').then((r) => r.json()),
       fetch('/api/archivos').then((r) => r.json()),
-    ]).then(([premisasData, archivosData]: [Premisa[], Archivo[]]) => {
-      setPremisas(premisasData)
-      setArchivos(archivosData)
+    ]).then(([premisasData, archivosData]) => {
+      if (Array.isArray(premisasData)) {
+        setPremisas(premisasData)
+      } else {
+        console.error('GET /api/premisas did not return an array:', premisasData)
+        setPremisas([])
+      }
+      if (Array.isArray(archivosData)) {
+        setArchivos(archivosData)
+      } else {
+        console.error('GET /api/archivos did not return an array:', archivosData)
+        setArchivos([])
+      }
       setLoading(false)
     })
   }, [])
@@ -133,7 +143,7 @@ export default function PremisasPage() {
     if (editingTitulo !== null) tituloRef.current?.focus()
   }, [editingTitulo])
 
-  async function patch(id: number, fields: Partial<Omit<Premisa, 'id'>>) {
+  async function patch(id: string, fields: Partial<Omit<Premisa, 'id'>>) {
     setPremisas((prev) => prev.map((p) => (p.id === id ? { ...p, ...fields } : p)))
     await fetch('/api/premisas', {
       method: 'PATCH',
@@ -142,7 +152,7 @@ export default function PremisasPage() {
     })
   }
 
-  function startEdit(id: number, field: 'pagina' | 'notas', current: string) {
+  function startEdit(id: string, field: 'pagina' | 'notas', current: string) {
     setEditing({ id, field })
     setEditValue(current)
   }
@@ -166,7 +176,7 @@ export default function PremisasPage() {
     setEditing(null)
   }
 
-  function startEditTitulo(id: number, titulo: string) {
+  function startEditTitulo(id: string, titulo: string) {
     setEditingTitulo(id)
     setTituloValue(titulo)
   }
@@ -184,7 +194,7 @@ export default function PremisasPage() {
     setEditingTitulo(null)
   }
 
-  async function deletePremisa(id: number) {
+  async function deletePremisa(id: string) {
     setPremisas((prev) => prev.filter((p) => p.id !== id))
     setConfirmDelete(null)
     setExpandedIds((prev) => { const next = new Set(prev); next.delete(id); return next })
@@ -195,7 +205,7 @@ export default function PremisasPage() {
     })
   }
 
-  function toggleExpanded(id: number) {
+  function toggleExpanded(id: string) {
     setExpandedIds((prev) => {
       const next = new Set(prev)
       if (next.has(id)) {
@@ -207,22 +217,44 @@ export default function PremisasPage() {
     })
   }
 
-  async function linkArchivo(premisaId: number) {
-    const selected = parseInt(linkSelect[premisaId] || '', 10)
+  async function linkArchivo(premisaId: string) {
+    const selected = linkSelect[premisaId] || ''
     if (!selected) return
     const premisa = premisas.find((p) => p.id === premisaId)
     if (!premisa || premisa.archivos_vinculados.includes(selected)) return
 
     const next = [...premisa.archivos_vinculados, selected]
     setLinkSelect((prev) => ({ ...prev, [premisaId]: '' }))
-    patch(premisaId, { archivos_vinculados: next })
+    const body = { id: premisaId, archivos_vinculados: next }
+    console.log('[linkArchivo] PATCH body:', body)
+    const res = await fetch('/api/premisas', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    const text = await res.text()
+    console.log('[linkArchivo] response', res.status, text)
+    if (res.ok) {
+      setPremisas((prev) => prev.map((p) => p.id === premisaId ? { ...p, archivos_vinculados: next } : p))
+    } else {
+      console.error('[linkArchivo] PATCH failed:', res.status, text)
+    }
   }
 
-  async function unlinkArchivo(premisaId: number, archivoId: number) {
+  async function unlinkArchivo(premisaId: string, archivoId: string) {
     const premisa = premisas.find((p) => p.id === premisaId)
     if (!premisa) return
     const next = premisa.archivos_vinculados.filter((id) => id !== archivoId)
-    patch(premisaId, { archivos_vinculados: next })
+    const res = await fetch('/api/premisas', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: premisaId, archivos_vinculados: next }),
+    })
+    if (res.ok) {
+      setPremisas((prev) => prev.map((p) => p.id === premisaId ? { ...p, archivos_vinculados: next } : p))
+    } else {
+      console.error('PATCH /api/premisas desvincular failed:', await res.text())
+    }
   }
 
   const completed = premisas.filter((p) => p.estado === 'completa').length
@@ -243,8 +275,9 @@ export default function PremisasPage() {
     const SEP = '━'.repeat(50)
 
     const lines: string[] = []
-    premisas.forEach((p) => {
-      const prefix = `Premisa ${String(p.id).padStart(2, '0')} — ${p.titulo}`
+    premisas.forEach((p, i) => {
+      const num = String(i + 1).padStart(2, '0')
+      const prefix = `Premisa ${num} — ${p.titulo}`
       const value = p.pagina !== null ? `pág. ${p.pagina}` : 'pendiente'
       const dotsCount = Math.max(1, 60 - prefix.length - 1)
       lines.push(`${prefix} ${'.'.repeat(dotsCount)} ${value}`)
@@ -259,7 +292,7 @@ export default function PremisasPage() {
     const pending = premisas.filter((p) => p.estado === 'pendiente').length
 
     const content = [
-      `ÍNDICE DE CUMPLIMIENTO DE PREMISAS — AgroEnergía SRL`,
+      `ÍNDICE DE CUMPLIMIENTO DE PREMISAS`,
       `PDI 1 — Cierre 31/07/2026`,
       `Generado el: ${today}`,
       '',
@@ -355,7 +388,7 @@ export default function PremisasPage() {
           <div className="px-4 py-10 text-center text-sm text-zinc-400">Sin resultados</div>
         )}
 
-        {filtered.map((premisa) => {
+        {filtered.map((premisa, index) => {
           // Delete confirmation — replaces entire row
           if (confirmDelete === premisa.id) {
             return (
@@ -396,7 +429,7 @@ export default function PremisasPage() {
               <div className="group grid grid-cols-[2.5rem_1fr_8rem_4.5rem_1fr_5.5rem] items-center gap-3 px-4 py-3 hover:bg-zinc-50/60 transition-colors">
                 {/* Number */}
                 <span className="text-xs font-mono text-zinc-300 tabular-nums select-none">
-                  {String(premisa.id).padStart(2, '0')}
+                  {String(index + 1).padStart(2, '0')}
                 </span>
 
                 {/* Title */}

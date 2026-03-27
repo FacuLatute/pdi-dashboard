@@ -9,7 +9,8 @@ interface Proyecto {
   ultima_actualizacion: string
 }
 
-function toInputDate(ddmmyyyy: string): string {
+function toInputDate(ddmmyyyy: string | null | undefined): string {
+  if (!ddmmyyyy) return ''
   const [dd, mm, yyyy] = ddmmyyyy.split('/')
   if (!dd || !mm || !yyyy) return ''
   return `${yyyy}-${mm}-${dd}`
@@ -39,12 +40,13 @@ export default function ConfiguracionPage() {
   useEffect(() => {
     fetch('/api/config')
       .then((r) => r.json())
-      .then((data: Proyecto) => {
+      .then((data: Proyecto | null) => {
+        if (!data) return
         setProyecto(data)
         setForm({
-          nombre: data.nombre,
-          materia: data.materia,
-          cierre: toInputDate(data.cierre),
+          nombre: data.nombre ?? '',
+          materia: data.materia ?? '',
+          cierre: data.cierre ? toInputDate(data.cierre) : '',
         })
       })
   }, [])

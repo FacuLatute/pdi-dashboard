@@ -14,7 +14,7 @@ interface VersionEntry {
 }
 
 interface Archivo {
-  id: number
+  id: string
   nombre: string
   tipo: Tipo
   version: string
@@ -52,13 +52,13 @@ function nextVersion(version: string): string {
 export default function ArchivosPage() {
   const [archivos, setArchivos] = useState<Archivo[]>([])
   const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState<{ id: number; field: EditableField } | null>(null)
+  const [editing, setEditing] = useState<{ id: string; field: EditableField } | null>(null)
   const [editValue, setEditValue] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
-  const [uploadingId, setUploadingId] = useState<number | null>(null)
-  const [expandedHistorial, setExpandedHistorial] = useState<Set<number>>(new Set())
+  const [uploadingId, setUploadingId] = useState<string | null>(null)
+  const [expandedHistorial, setExpandedHistorial] = useState<Set<string>>(new Set())
 
   const inputRef = useRef<HTMLInputElement>(null)
   const firstFormRef = useRef<HTMLInputElement>(null)
@@ -67,8 +67,13 @@ export default function ArchivosPage() {
   useEffect(() => {
     fetch('/api/archivos')
       .then((r) => r.json())
-      .then((data: Archivo[]) => {
-        setArchivos(data.map((a) => ({ ...a, historial: a.historial ?? [] })))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setArchivos(data.map((a: Archivo) => ({ ...a, historial: a.historial ?? [] })))
+        } else {
+          console.error('GET /api/archivos did not return an array:', data)
+          setArchivos([])
+        }
         setLoading(false)
       })
   }, [])
@@ -81,7 +86,7 @@ export default function ArchivosPage() {
     if (showForm) firstFormRef.current?.focus()
   }, [showForm])
 
-  async function patch(id: number, fields: Partial<Omit<Archivo, 'id'>>) {
+  async function patch(id: string, fields: Partial<Omit<Archivo, 'id'>>) {
     setArchivos((prev) => prev.map((a) => (a.id === id ? { ...a, ...fields } : a)))
     await fetch('/api/archivos', {
       method: 'PATCH',
@@ -90,7 +95,7 @@ export default function ArchivosPage() {
     })
   }
 
-  function startEdit(id: number, field: EditableField, current: string) {
+  function startEdit(id: string, field: EditableField, current: string) {
     setEditing({ id, field })
     setEditValue(current)
   }
@@ -115,6 +120,10 @@ export default function ArchivosPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, notas: '' }),
     })
+    if (!res.ok) {
+      setSubmitting(false)
+      return
+    }
     const created: Archivo = await res.json()
     setArchivos((prev) => [...prev, { ...created, historial: created.historial ?? [] }])
     setForm(EMPTY_FORM)
@@ -122,7 +131,7 @@ export default function ArchivosPage() {
     setSubmitting(false)
   }
 
-  function handleUploadClick(id: number) {
+  function handleUploadClick(id: string) {
     setUploadingId(id)
     fileInputRef.current?.click()
   }
@@ -141,17 +150,17 @@ export default function ArchivosPage() {
       const formData = new FormData()
       formData.append('file', file)
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
-      const { filename } = await res.json()
+      const { publicUrl } = await res.json()
 
       const archivo = archivos.find((a) => a.id === id)
       if (!archivo) return
 
-      const updates: Partial<Omit<Archivo, 'id'>> = { ruta: filename }
+      const updates: Partial<Omit<Archivo, 'id'>> = { ruta: publicUrl }
 
       if (archivo.ruta) {
         const prevEntry: VersionEntry = {
           version: archivo.version,
-          filename: archivo.ruta,
+          filename: archivo.nombre,
           fecha: todayDMY(),
           ruta: archivo.ruta,
         }
@@ -165,7 +174,7 @@ export default function ArchivosPage() {
     }
   }
 
-  async function restoreVersion(id: number, entry: VersionEntry, archivo: Archivo) {
+  async function restoreVersion(id: string, entry: VersionEntry, archivo: Archivo) {
     let newHistorial = archivo.historial.filter(
       (h) => !(h.version === entry.version && h.ruta === entry.ruta)
     )
@@ -174,7 +183,7 @@ export default function ArchivosPage() {
         ...newHistorial,
         {
           version: archivo.version,
-          filename: archivo.ruta,
+          filename: archivo.nombre,
           fecha: todayDMY(),
           ruta: archivo.ruta,
         },
@@ -187,7 +196,7 @@ export default function ArchivosPage() {
     })
   }
 
-  function toggleHistorial(id: number) {
+  function toggleHistorial(id: string) {
     setExpandedHistorial((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -314,14 +323,14 @@ export default function ArchivosPage() {
         <div className="grid grid-cols-2 gap-4">
           {archivos.map((archivo) => {
             const isEditing = (field: EditableField) =>
-              editing?.id === archivo.id && editing.field === field
+              editing !== null && editing?.id === archivo.id && editing?.field === field
             const isUploading = uploadingId === archivo.id
             const historialOpen = expandedHistorial.has(archivo.id)
-            const hasHistory = Boolean(archivo.ruta) || archivo.historial.length > 0
+            const hasHistory = Boolean(archivo.ruta) || (archivo.historial ?? []).length > 0
 
             return (
               <div
-                key={archivo.id}
+                key={String(archivo.id)}
                 className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4 hover:shadow-sm transition-shadow"
               >
                 {/* Top: type badge + status */}
@@ -454,13 +463,12 @@ export default function ArchivosPage() {
                         <li className="flex items-center gap-2 text-xs">
                           <span className="font-mono text-zinc-500 shrink-0 w-7">{archivo.version}</span>
                           <a
-                            href={`/archivos/${archivo.ruta}`}
+                            href={archivo.ruta}
                             target="_blank"
                             rel="noopener noreferrer"
-                            title={archivo.ruta}
                             className="flex-1 min-w-0 text-[#534AB7] hover:underline truncate"
                           >
-                            {archivo.ruta}
+                            {archivo.nombre}
                           </a>
                           <span className="shrink-0 text-zinc-300">actual</span>
                         </li>
@@ -471,7 +479,7 @@ export default function ArchivosPage() {
                           <span className="font-mono text-zinc-500 shrink-0 w-7">{entry.version}</span>
                           <span className="shrink-0 text-zinc-400">{entry.fecha}</span>
                           <a
-                            href={`/archivos/${entry.ruta}`}
+                            href={entry.ruta}
                             target="_blank"
                             rel="noopener noreferrer"
                             title={entry.filename}
@@ -530,13 +538,12 @@ export default function ArchivosPage() {
                   {archivo.ruta ? (
                     <>
                       <a
-                        href={`/archivos/${archivo.ruta}`}
+                        href={archivo.ruta}
                         target="_blank"
                         rel="noopener noreferrer"
-                        title={archivo.ruta}
                         className="flex-1 min-w-0 text-xs text-[#534AB7] hover:underline truncate"
                       >
-                        {archivo.ruta}
+                        {archivo.nombre}
                       </a>
                       <button
                         onClick={() => handleUploadClick(archivo.id)}
